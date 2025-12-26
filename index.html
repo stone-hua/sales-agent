@@ -2,246 +2,269 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 核心修复：viewport-fit=cover 解决刘海屏白边，禁止缩放 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AI 销冠实战系统</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* --- 1. 全局重置 (修复乱跳问题的根源) --- */
         :root {
-            --primary-color: #07C160;
-            --bg-color: #ededed;
-            --sidebar-bg: #f7f7f7;
+            --primary: #07C160;
+            --bg: #f2f2f2;
             --white: #ffffff;
-            --text-main: #111;
-            --text-sub: #888;
-            --border: #dcdcdc;
-            --ai-bubble: #ffffff;
-            --user-bubble: #95ec69;
+            --text: #111;
+            --border: #e0e0e0;
+            --user-bg: #95ec69;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); height: 100dvh; display: flex; overflow: hidden; }
 
-        /* --- 遮罩层 (点击空白关闭) --- */
-        .overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4); z-index: 90;
-            opacity: 0; visibility: hidden; transition: all 0.3s;
-        }
-        .overlay.active { opacity: 1; visibility: visible; }
-
-        /* --- 侧边栏 --- */
-        .sidebar {
-            width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; z-index: 100;
-            transition: transform 0.3s ease;
-        }
-        
-        .sidebar-header { padding: 15px; background: var(--bg-color); border-bottom: 1px solid var(--border); }
-        
-        /* 核心功能按钮组 */
-        .action-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
-        
-        .btn-primary {
-            background: var(--primary-color); color: white; border: none; padding: 10px; border-radius: 6px; 
-            font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-secondary {
-            background: white; color: var(--text-main); border: 1px solid var(--border); padding: 8px; border-radius: 6px;
-            font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+        html, body {
+            width: 100%;
+            height: 100dvh; /* 关键：使用动态高度，适配手机地址栏伸缩 */
+            overflow: hidden; /* 关键：禁止整个页面滚动，只让聊天区滚 */
+            background-color: #e5e5e5; /* 电脑端背景色 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        .history-list { flex: 1; overflow-y: auto; padding: 10px 0; }
-        .history-item {
-            padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #f0f0f0; background: var(--sidebar-bg);
-        }
-        .history-item:hover, .history-item.active { background-color: #e6e6e6; }
-        .history-title { font-size: 14px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
-        .history-actions { display: none; gap: 8px; font-size: 12px; color: var(--text-sub); }
-        .history-item:hover .history-actions, .history-item.active .history-actions { display: flex; }
-
-        /* --- 主界面 --- */
-        .main-chat { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; background: var(--bg-color); }
-
-        /* 顶部导航 */
-        .navbar {
-            height: 50px; background: var(--bg-color); border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center; padding: 0 15px;
-            flex-shrink: 0; z-index: 95;
-        }
-        .nav-title { font-weight: 600; font-size: 16px; }
-        .nav-icons { display: flex; gap: 15px; font-size: 18px; color: var(--text-main); }
-        .menu-icon { cursor: pointer; }
-
-        /* 配置面板 (下拉式) */
-        .config-panel {
-            position: absolute; top: 50px; left: 0; width: 100%; background: var(--white);
-            padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); z-index: 98;
-            transform: translateY(-150%); transition: transform 0.3s ease;
-        }
-        .config-panel.open { transform: translateY(0); }
-        
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 13px; color: var(--text-sub); margin-bottom: 6px; }
-        .form-control {
-            width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;
-            font-size: 15px; outline: none; background: #f9f9f9;
+        /* --- 2. App 容器 (电脑端居中，手机端全屏) --- */
+        .app-container {
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column; /* 垂直布局：头-身-脚 */
+            position: relative;
+            margin: 0 auto;
         }
 
-        /* 聊天区域 */
-        .chat-box { flex: 1; overflow-y: auto; padding: 15px; }
-        .message { display: flex; margin-bottom: 20px; align-items: flex-start; }
+        /* 电脑端适配：限制最大宽度，像个手机App */
+        @media (min-width: 768px) {
+            .app-container {
+                max-width: 450px;
+                height: 100dvh;
+                box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            }
+        }
+
+        /* --- 3. 顶部导航 (Header) - 固定高度 --- */
+        .header {
+            height: 50px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            flex-shrink: 0; /* 禁止压缩 */
+            z-index: 20;
+        }
+        .header-title { font-weight: 600; font-size: 16px; }
+        .header-btn { font-size: 18px; cursor: pointer; padding: 5px; color: #333; }
+
+        /* --- 4. 聊天区域 (Body) - 只有这里能滚 --- */
+        .chat-area {
+            flex: 1; /* 占据剩余所有空间 */
+            overflow-y: auto; /* 允许垂直滚动 */
+            padding: 15px;
+            -webkit-overflow-scrolling: touch; /* iOS 丝滑滚动 */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 消息气泡样式 */
+        .message { display: flex; align-items: flex-start; gap: 10px; max-width: 100%; }
         .message.user { flex-direction: row-reverse; }
         
-        .avatar { width: 40px; height: 40px; border-radius: 4px; margin: 0 10px; background-size: cover; flex-shrink: 0; }
-        .message.user .avatar { display: none; }
+        .avatar {
+            width: 38px; height: 38px; border-radius: 4px; background-size: cover; flex-shrink: 0;
+        }
+        .message.user .avatar { display: none; } /* 用户不显示头像 */
 
-        .bubble-wrapper { max-width: 85%; display: flex; flex-direction: column; }
+        .bubble-content {
+            max-width: 75%;
+            display: flex; 
+            flex-direction: column;
+        }
+        
         .bubble {
-            padding: 10px 14px; border-radius: 6px; font-size: 15px; line-height: 1.6; word-wrap: break-word;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 15px;
+            line-height: 1.5;
+            word-wrap: break-word;
             position: relative;
         }
-        .message.ai .bubble { background: var(--ai-bubble); border: 1px solid #e0e0e0; }
-        .message.user .bubble { background: var(--user-bubble); color: #000; border: 1px solid #8ad962; }
+        .message.ai .bubble { background: var(--white); border: 1px solid #ddd; }
+        .message.user .bubble { background: var(--user-bg); border: 1px solid #8ad962; color: #000; }
 
-        /* 消息操作栏 (点赞/复制) */
-        .msg-actions {
-            display: flex; gap: 15px; margin-top: 6px; padding-left: 2px;
+        /* Markdown 适配 */
+        .bubble p { margin: 0 0 5px 0; }
+        .bubble p:last-child { margin: 0; }
+        .bubble ul { padding-left: 20px; margin: 5px 0; }
+        .bubble strong { font-weight: 600; }
+
+        /* 操作栏 (复制/点赞) */
+        .actions {
+            display: flex; gap: 15px; margin-top: 5px; padding-left: 2px;
             font-size: 12px; color: #999;
         }
-        .message.user .msg-actions { display: none; } /* 用户消息不显示操作 */
-        .action-btn { cursor: pointer; display: flex; align-items: center; gap: 4px; }
-        .action-btn.active { color: var(--primary-color); }
+        .message.user .actions { display: none; }
+        .act-btn { cursor: pointer; display: flex; align-items: center; gap: 3px; }
+        .act-btn.active { color: var(--primary); }
 
-        /* 底部输入 */
+        /* --- 5. 底部输入区 (Footer) - 固定底部 --- */
         .footer {
-            padding: 10px 15px; background: #f7f7f7; border-top: 1px solid var(--border);
-            display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+            background: #f7f7f7;
+            border-top: 1px solid var(--border);
+            padding: 10px 15px;
+            /* 关键：适配 iPhone 底部小黑条 */
+            padding-bottom: calc(10px + env(safe-area-inset-bottom)); 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0; /* 禁止压缩 */
+            z-index: 20;
         }
+
         .input-box {
-            flex: 1; background: var(--white); border-radius: 4px; padding: 10px;
-            border: 1px solid var(--border); font-size: 16px; outline: none;
+            flex: 1;
+            height: 36px;
+            padding: 0 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px; /* 防止iOS输入框放大 */
+            outline: none;
+            background: var(--white);
         }
+
         .send-btn {
-            width: 36px; height: 36px; background: var(--primary-color); color: white;
-            border-radius: 4px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 16px;
+            width: 36px; height: 36px;
+            background: var(--primary);
+            color: white;
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
         }
 
-        /* 移动端适配 */
-        .mobile-only { display: none; }
-        @media (max-width: 768px) {
-            .mobile-only { display: block; }
-            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
-            .sidebar.open { transform: translateX(0); }
-            .bubble-wrapper { max-width: 90%; }
+        /* --- 6. 侧边栏 & 设置面板 (Overlay模式) --- */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 50;
+            opacity: 0; visibility: hidden; transition: 0.3s;
         }
+        .overlay.show { opacity: 1; visibility: visible; }
 
-        /* 模态框 (使用说明) */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 85%; max-width: 400px; position: relative; }
-        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #999; }
+        /* 左侧边栏 */
+        .sidebar {
+            position: absolute; top: 0; left: 0; height: 100%; width: 75%;
+            background: var(--white); z-index: 60;
+            transform: translateX(-100%); transition: 0.3s;
+            display: flex; flex-direction: column;
+        }
+        .sidebar.show { transform: translateX(0); }
+
+        /* 顶部设置面板 */
+        .config-panel {
+            position: absolute; top: 50px; left: 0; width: 100%;
+            background: var(--white); z-index: 55;
+            padding: 20px;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.05);
+            transform: translateY(-150%); transition: 0.3s;
+        }
+        .config-panel.show { transform: translateY(0); }
+
+        /* 侧边栏内容样式 */
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); background: #f7f7f7; }
+        .new-chat-btn {
+            width: 100%; padding: 10px; background: var(--primary); color: white;
+            border: none; border-radius: 6px; font-size: 15px;
+        }
+        .history-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .history-item {
+            padding: 12px; border-bottom: 1px solid #eee; font-size: 14px;
+            display: flex; justify-content: space-between;
+        }
+        .history-item.active { color: var(--primary); font-weight: bold; }
+        
+        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: #999; }
+
+        /* 设置表单 */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; }
+        .form-control { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
 
         /* 思考动画 */
-        .thinking-dots span { animation: blink 1.4s infinite both; }
-        .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
+        .thinking { color: #999; font-size: 13px; padding: 5px 0; display: flex; align-items: center; gap: 5px; }
+        .dot { width: 4px; height: 4px; background: #999; border-radius: 50%; animation: bounce 1.4s infinite; }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 
     </style>
 </head>
 <body>
 
-<!-- 全屏遮罩 (点击空白关闭侧边栏/设置) -->
-<div class="overlay" id="overlay" onclick="closeAllPanels()"></div>
+<div class="app-container">
+    <!-- 遮罩层 -->
+    <div class="overlay" id="overlay" onclick="closeAll()"></div>
 
-<div class="app-layout">
-    <!-- 侧边栏 -->
+    <!-- 顶部导航 -->
+    <div class="header">
+        <div class="header-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
+        <div class="header-title" id="header-title">新对话</div>
+        <div class="header-btn" onclick="toggleConfig()"><i class="fas fa-cog"></i></div>
+    </div>
+
+    <!-- 设置面板 (下拉) -->
+    <div class="config-panel" id="config-panel">
+        <div class="form-group">
+            <label>选择产品</label>
+            <select id="product_select" class="form-control" onchange="saveConfig()">
+                <option value="AI应用实战线下课">AI应用实战线下课</option>
+                <option value="AI应用线上课">AI应用线上课</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>授权码</label>
+            <input type="text" id="auth_code" class="form-control" placeholder="输入授权码" onchange="saveConfig()">
+        </div>
+    </div>
+
+    <!-- 左侧边栏 (历史记录) -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="action-group">
-                <button class="btn-primary" onclick="startNewChat()">
-                    <i class="fas fa-plus"></i> 开启新对话
-                </button>
-                <button class="btn-secondary" onclick="showModal('help-modal')">
-                    <i class="fas fa-book-open"></i> 使用说明书
-                </button>
-            </div>
+            <button class="new-chat-btn" onclick="startNewChat()">+ 开启新对话</button>
         </div>
         <div class="history-list" id="history-list">
-            <!-- 历史记录 -->
+            <!-- 历史记录动态插入 -->
         </div>
-        <div style="padding:15px; text-align:center; font-size:12px; color:#999; border-top:1px solid #eee;">
-            <span onclick="clearCache()" style="cursor:pointer;">🗑️ 清空缓存</span>
+        <div class="sidebar-footer">
+            <p onclick="clearCache()" style="cursor:pointer; text-decoration:underline;">清空所有缓存</p>
+            <br>
+            <p>技术支持：[你的名字]</p>
+        </div>
+    </div>
+
+    <!-- 聊天内容区 -->
+    <div class="chat-area" id="chat-box">
+        <!-- 欢迎语 -->
+        <div class="message ai">
+            <div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div>
+            <div class="bubble-content">
+                <div class="bubble">你好！我是你的 AI 销冠助手。请点击右上角 ⚙️ 设置授权码，然后开始工作。</div>
+            </div>
         </div>
     </div>
 
-    <!-- 主界面 -->
-    <div class="main-chat">
-        <!-- 顶部导航 -->
-        <div class="navbar">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <i class="fas fa-bars menu-icon mobile-only" onclick="openSidebar()"></i>
-                <span class="nav-title" id="chat-title">新对话</span>
-            </div>
-            <div class="nav-icons">
-                <i class="fas fa-cog menu-icon" onclick="toggleConfig()"></i>
-            </div>
-        </div>
-
-        <!-- 配置面板 (下拉) -->
-        <div class="config-panel" id="config-panel">
-            <div class="form-group">
-                <label>当前销售产品</label>
-                <select id="product_select" class="form-control" onchange="saveSettings()">
-                    <option value="AI应用实战线下课">AI应用实战线下课</option>
-                    <option value="AI应用线上课">AI应用线上课</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>员工授权码</label>
-                <input type="text" id="auth_code" class="form-control" placeholder="输入授权码" onchange="saveSettings()">
-            </div>
-            <div style="text-align:right;">
-                <span style="font-size:12px; color:#07C160; cursor:pointer;" onclick="closeAllPanels()">收起设置</span>
-            </div>
-        </div>
-
-        <!-- 聊天内容 -->
-        <div class="chat-box" id="chat-box">
-            <!-- 欢迎语 -->
-            <div class="message ai">
-                <div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div>
-                <div class="bubble-wrapper">
-                    <div class="bubble">你好！我是你的 AI 销冠助手。请点击右上角设置，输入授权码后开始工作。</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 底部输入 -->
-        <div class="footer">
-            <input type="text" id="user_input" class="input-box" placeholder="输入客户问题..." enterkeyhint="send">
-            <div class="send-btn" id="send_btn" onclick="sendMessage()">
-                <i class="fas fa-paper-plane"></i>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 使用说明弹窗 -->
-<div class="modal" id="help-modal">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeModal('help-modal')">&times;</span>
-        <h3 style="margin-bottom:15px;">📖 销冠助手使用指南</h3>
-        <div style="font-size:14px; line-height:1.6; color:#444;">
-            <p><strong>1. 首次使用：</strong><br>点击右上角 ⚙️ 图标，输入老板分发的授权码，并选择要销售的产品。</p>
-            <p><strong>2. 接待客户：</strong><br>点击左上角“开启新对话”，系统会自动建立独立会话。</p>
-            <p><strong>3. 话术复制：</strong><br>点击回答下方的“复制”按钮，可直接粘贴给客户。</p>
-            <p><strong>4. 帮助进化：</strong><br>如果觉得回答不好，请点击“踩”，我们会优化大脑。</p>
-        </div>
-        <div style="margin-top:20px; padding-top:10px; border-top:1px solid #eee; font-size:12px; color:#999;">
-            技术支持：[你的名字] | 版本 v2.0
+    <!-- 底部输入区 -->
+    <div class="footer">
+        <input type="text" id="user_input" class="input-box" placeholder="输入问题..." enterkeyhint="send">
+        <div class="send-btn" id="send_btn" onclick="sendMessage()">
+            <i class="fas fa-paper-plane"></i>
         </div>
     </div>
 </div>
@@ -257,14 +280,12 @@
 
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {
-        loadSettings();
+        loadConfig();
         renderHistory();
         
-        // 自动加载最近一次对话，或者新建
+        // 自动加载最近对话
         if (chatList.length > 0) {
             loadChat(chatList[0].id);
-        } else {
-            startNewChat();
         }
 
         // 监听回车
@@ -273,36 +294,29 @@
         });
     });
 
-    // --- 交互逻辑 ---
-    function openSidebar() {
-        document.getElementById('sidebar').classList.add('open');
-        document.getElementById('overlay').classList.add('active');
+    // --- 核心交互 ---
+    function toggleSidebar() {
+        closeConfig();
+        document.getElementById('sidebar').classList.toggle('show');
+        document.getElementById('overlay').classList.toggle('show');
     }
 
     function toggleConfig() {
-        const panel = document.getElementById('config-panel');
-        const overlay = document.getElementById('overlay');
-        if (panel.classList.contains('open')) {
-            closeAllPanels();
-        } else {
-            panel.classList.add('open');
-            overlay.classList.add('active');
-        }
+        closeSidebar();
+        document.getElementById('config-panel').classList.toggle('show');
+        document.getElementById('overlay').classList.toggle('show');
     }
 
-    function closeAllPanels() {
-        document.getElementById('sidebar').classList.remove('open');
-        document.getElementById('config-panel').classList.remove('open');
-        document.getElementById('overlay').classList.remove('active');
+    function closeAll() {
+        closeSidebar();
+        closeConfig();
+        document.getElementById('overlay').classList.remove('show');
     }
 
-    function showModal(id) {
-        document.getElementById(id).style.display = 'flex';
-        closeAllPanels(); // 打开弹窗时关闭侧边栏
-    }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('show'); }
+    function closeConfig() { document.getElementById('config-panel').classList.remove('show'); }
 
-    // --- 核心业务逻辑 ---
+    // --- 消息发送 ---
     async function sendMessage() {
         const input = document.getElementById('user_input');
         const text = input.value.trim();
@@ -315,9 +329,10 @@
         // 1. 上屏用户消息
         appendMessage('user', text);
         input.value = '';
-        input.blur();
+        input.blur(); // 收起键盘
+        closeAll(); // 关闭所有面板
         
-        // 2. 显示思考动画
+        // 2. 显示思考中
         const loadingId = showThinking();
 
         try {
@@ -332,113 +347,36 @@
                     "query": text,
                     "response_mode": "blocking",
                     "conversation_id": currentConvId,
-                    "user": "web-client"
+                    "user": getUserId()
                 })
             });
 
             const data = await response.json();
-            removeMessage(loadingId); // 移除思考动画
+            removeThinking(loadingId);
 
             if (!response.ok) throw new Error(data.message || "请求失败");
 
             // 3. 上屏 AI 消息
             appendMessage('ai', data.answer, data.message_id);
 
-            // 4. 处理会话标题 (如果是新会话)
+            // 4. 更新会话
             if (currentConvId !== data.conversation_id) {
                 currentConvId = data.conversation_id;
-                updateChatTitle(currentConvId, text);
+                updateChatList(currentConvId, text);
             }
             
-            // 5. 保存消息到本地
-            saveMsgToLocal(currentConvId, 'user', text);
-            saveMsgToLocal(currentConvId, 'ai', data.answer, data.message_id);
+            // 5. 本地存储
+            saveMsg(currentConvId, 'user', text);
+            saveMsg(currentConvId, 'ai', data.answer, data.message_id);
 
         } catch (error) {
-            removeMessage(loadingId);
-            appendMessage('ai', `❌ 系统错误：${error.message}`);
+            removeThinking(loadingId);
+            appendMessage('ai', `❌ 错误：${error.message}`);
         }
     }
 
-    // --- 数据管理 ---
-    function startNewChat() {
-        currentConvId = "";
-        document.getElementById('chat-title').innerText = "新对话";
-        document.getElementById('chat-box').innerHTML = `
-            <div class="message ai">
-                <div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div>
-                <div class="bubble-wrapper"><div class="bubble">你好！我是你的 AI 销冠助手。请确认右上角选择了正确的产品，然后开始提问。</div></div>
-            </div>
-        `;
-        closeAllPanels();
-    }
-
-    function updateChatTitle(id, firstMsg) {
-        const title = firstMsg.substring(0, 10) + (firstMsg.length > 10 ? "..." : "");
-        // 检查是否存在，不存在则添加
-        if (!chatList.find(c => c.id === id)) {
-            chatList.unshift({ id: id, title: title });
-            localStorage.setItem('chat_list', JSON.stringify(chatList));
-            renderHistory();
-        }
-    }
-
-    function loadChat(id) {
-        currentConvId = id;
-        const chat = chatList.find(c => c.id === id);
-        if (chat) document.getElementById('chat-title').innerText = chat.title;
-        
-        const msgs = JSON.parse(localStorage.getItem(`msg_${id}`)) || [];
-        const box = document.getElementById('chat-box');
-        box.innerHTML = '';
-        
-        if (msgs.length === 0) {
-             box.innerHTML = `<div class="message ai"><div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div><div class="bubble-wrapper"><div class="bubble">历史记录加载完毕</div></div></div>`;
-        } else {
-            msgs.forEach(m => appendMessage(m.role, m.content, m.msgId, false));
-        }
-        closeAllPanels();
-    }
-
-    function renameChat(id, event) {
-        event.stopPropagation();
-        const newName = prompt("请输入新的对话名称：");
-        if (newName) {
-            const chat = chatList.find(c => c.id === id);
-            if (chat) {
-                chat.title = newName;
-                localStorage.setItem('chat_list', JSON.stringify(chatList));
-                renderHistory();
-                if (currentConvId === id) document.getElementById('chat-title').innerText = newName;
-            }
-        }
-    }
-
-    function deleteChat(id, event) {
-        event.stopPropagation();
-        if (!confirm("确定删除？")) return;
-        chatList = chatList.filter(c => c.id !== id);
-        localStorage.setItem('chat_list', JSON.stringify(chatList));
-        localStorage.removeItem(`msg_${id}`);
-        renderHistory();
-        if (currentConvId === id) startNewChat();
-    }
-
-    function renderHistory() {
-        const list = document.getElementById('history-list');
-        list.innerHTML = chatList.map(c => `
-            <div class="history-item ${c.id === currentConvId ? 'active' : ''}" onclick="loadChat('${c.id}')">
-                <span class="history-title">${c.title}</span>
-                <div class="history-actions">
-                    <i class="fas fa-pen" onclick="renameChat('${c.id}', event)"></i>
-                    <i class="fas fa-trash" onclick="deleteChat('${c.id}', event)"></i>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    // --- 辅助功能 ---
-    function appendMessage(role, text, msgId = null, save = true) {
+    // --- UI 渲染 ---
+    function appendMessage(role, text, msgId = null) {
         const box = document.getElementById('chat-box');
         const div = document.createElement('div');
         div.className = `message ${role}`;
@@ -449,14 +387,13 @@
         let actions = '';
         if (role === 'ai' && msgId) {
             actions = `
-                <div class="msg-actions">
-                    <span class="action-btn" onclick="copyText(this, '${text.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i> 复制</span>
-                    <span class="action-btn" onclick="sendFeedback('${msgId}', 'like', this)"><i class="fas fa-thumbs-up"></i></span>
-                    <span class="action-btn" onclick="sendFeedback('${msgId}', 'dislike', this)"><i class="fas fa-thumbs-down"></i></span>
+                <div class="actions">
+                    <span class="act-btn" onclick="copyText(this, '${text.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i> 复制</span>
+                    <span class="act-btn" onclick="feedback('${msgId}', 'like', this)"><i class="fas fa-thumbs-up"></i></span>
                 </div>`;
         }
 
-        div.innerHTML = `${avatar}<div class="bubble-wrapper"><div class="bubble">${htmlText}</div>${actions}</div>`;
+        div.innerHTML = `${avatar}<div class="bubble-content"><div class="bubble">${htmlText}</div>${actions}</div>`;
         box.appendChild(div);
         box.scrollTop = box.scrollHeight;
     }
@@ -469,35 +406,99 @@
         div.className = 'message ai';
         div.innerHTML = `
             <div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div>
-            <div class="bubble-wrapper"><div class="bubble" style="color:#999; font-size:13px;">
-                <span class="thinking-dots">✨ AI 正在思考<span>.</span><span>.</span><span>.</span></span>
+            <div class="bubble-content"><div class="bubble thinking">
+                AI 正在思考 <div class="dot"></div><div class="dot"></div><div class="dot"></div>
             </div></div>`;
         box.appendChild(div);
         box.scrollTop = box.scrollHeight;
         return id;
     }
 
-    function removeMessage(id) {
+    function removeThinking(id) {
         const el = document.getElementById(id);
         if (el) el.remove();
     }
 
-    function saveMsgToLocal(id, role, content, msgId) {
+    // --- 数据存储与管理 ---
+    function startNewChat() {
+        currentConvId = "";
+        document.getElementById('header-title').innerText = "新对话";
+        document.getElementById('chat-box').innerHTML = `
+            <div class="message ai">
+                <div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div>
+                <div class="bubble-content"><div class="bubble">你好！我是你的 AI 销冠助手。请确认右上角选择了正确的产品，然后开始提问。</div></div>
+            </div>
+        `;
+        closeAll();
+    }
+
+    function updateChatList(id, firstMsg) {
+        const title = firstMsg.substring(0, 8) + "...";
+        if (!chatList.find(c => c.id === id)) {
+            chatList.unshift({ id: id, title: title });
+            localStorage.setItem('chat_list', JSON.stringify(chatList));
+            renderHistory();
+        }
+    }
+
+    function loadChat(id) {
+        currentConvId = id;
+        const chat = chatList.find(c => c.id === id);
+        if (chat) document.getElementById('header-title').innerText = chat.title;
+        
+        const msgs = JSON.parse(localStorage.getItem(`msg_${id}`)) || [];
+        const box = document.getElementById('chat-box');
+        box.innerHTML = '';
+        
+        if (msgs.length === 0) {
+             box.innerHTML = `<div class="message ai"><div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div><div class="bubble-content"><div class="bubble">历史记录加载完毕</div></div></div>`;
+        } else {
+            msgs.forEach(m => appendMessage(m.role, m.content, m.msgId));
+        }
+        closeAll();
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = chatList.map(c => `
+            <div class="history-item ${c.id === currentConvId ? 'active' : ''}" onclick="loadChat('${c.id}')">
+                <span>${c.title}</span>
+                <i class="fas fa-trash" style="color:#ccc;" onclick="deleteChat('${c.id}', event)"></i>
+            </div>
+        `).join('');
+    }
+
+    function deleteChat(id, e) {
+        e.stopPropagation();
+        if(!confirm("删除此对话？")) return;
+        chatList = chatList.filter(c => c.id !== id);
+        localStorage.setItem('chat_list', JSON.stringify(chatList));
+        localStorage.removeItem(`msg_${id}`);
+        renderHistory();
+        if(currentConvId === id) startNewChat();
+    }
+
+    function saveMsg(id, role, content, msgId) {
         let msgs = JSON.parse(localStorage.getItem(`msg_${id}`)) || [];
         msgs.push({ role, content, msgId });
         localStorage.setItem(`msg_${id}`, JSON.stringify(msgs));
     }
 
-    function saveSettings() {
+    function saveConfig() {
         localStorage.setItem('product', document.getElementById('product_select').value);
         localStorage.setItem('auth', document.getElementById('auth_code').value);
     }
-    function loadSettings() {
+    function loadConfig() {
         if(localStorage.getItem('product')) document.getElementById('product_select').value = localStorage.getItem('product');
         if(localStorage.getItem('auth')) document.getElementById('auth_code').value = localStorage.getItem('auth');
     }
     function clearCache() {
-        if(confirm("确定清空所有记录？")) { localStorage.clear(); location.reload(); }
+        if(confirm("确定清空所有？")) { localStorage.clear(); location.reload(); }
+    }
+    function getUserId() {
+        let uid = localStorage.getItem('uid');
+        if(!uid) { uid = 'user-' + Date.now(); localStorage.setItem('uid', uid); }
+        return uid;
     }
 
     function copyText(btn, text) {
@@ -508,20 +509,15 @@
         });
     }
 
-    async function sendFeedback(msgId, rating, btn) {
-        // UI 变色
-        const parent = btn.parentElement;
-        parent.querySelectorAll('.action-btn').forEach(b => b.style.color = '#999');
+    async function feedback(msgId, rating, btn) {
         btn.style.color = '#07C160';
-        
-        // 发送请求
         try {
             await fetch(`${DIFY_BASE_URL}/messages/${msgId}/feedbacks`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${DIFY_API_KEY}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rating: rating, user: "web-client" })
+                body: JSON.stringify({ rating: rating, user: getUserId() })
             });
-        } catch(e) { console.error(e); }
+        } catch(e) {}
     }
 </script>
 

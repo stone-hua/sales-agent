@@ -2,7 +2,6 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 核心：禁止缩放，适配刘海屏，锁定高度 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AI 销冠实战系统</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -36,11 +35,11 @@
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         html, body {
-            width: 100%; height: 100dvh; /* 动态视口高度 */
-            overflow: hidden; /* 禁止整体滚动 */
-            background-color: #333; /* 浏览器背景底色 (电脑端可见) */
+            width: 100%; height: 100dvh;
+            overflow: hidden;
+            background-color: #333;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex; justify-content: center; /* 电脑端居中 */
+            display: flex; justify-content: center;
         }
 
         /* --- 2. App 容器 --- */
@@ -48,12 +47,10 @@
             width: 100%; height: 100%;
             background: var(--bg);
             display: flex; flex-direction: column;
-            position: relative; /* 侧边栏相对于此定位 */
+            position: relative; margin: 0 auto;
             transition: background 0.3s;
-            overflow: hidden; /* 防止子元素溢出 */
         }
 
-        /* 电脑端适配：限制宽度，模拟手机体验 */
         @media (min-width: 768px) {
             .app-container { max-width: 450px; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
         }
@@ -65,11 +62,7 @@
             padding: 0 15px; flex-shrink: 0; z-index: 20; color: var(--text);
         }
         .header-title { font-weight: 600; font-size: 16px; }
-        .header-btn { 
-            font-size: 18px; cursor: pointer; padding: 8px; color: var(--text); 
-            transition: opacity 0.2s;
-        }
-        .header-btn:hover { opacity: 0.7; }
+        .header-btn { font-size: 18px; cursor: pointer; padding: 5px; color: var(--text); }
 
         /* --- 4. 聊天区域 --- */
         .chat-area {
@@ -129,8 +122,7 @@
             border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
 
-        /* --- 6. 侧边栏 (默认隐藏，点击滑出) --- */
-        /* 遮罩 */
+        /* --- 6. 侧边栏 --- */
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 50;
@@ -138,10 +130,8 @@
         }
         .overlay.show { opacity: 1; visibility: visible; }
 
-        /* 侧边栏主体 */
         .sidebar {
-            position: absolute; top: 0; left: 0; height: 100%; 
-            width: 280px; max-width: 80%; /* 限制宽度 */
+            position: absolute; top: 0; left: 0; height: 100%; width: 280px; max-width: 80%;
             background: var(--sidebar-bg); z-index: 60;
             transform: translateX(-100%); transition: 0.3s;
             display: flex; flex-direction: column; border-right: 1px solid var(--border);
@@ -149,8 +139,6 @@
         .sidebar.show { transform: translateX(0); }
 
         .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
-        
-        /* 按钮样式优化 */
         .btn-new-chat {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             width: 100%; padding: 10px; margin-bottom: 10px;
@@ -179,12 +167,11 @@
         .history-actions i { 
             padding: 8px; color: var(--text-sub); cursor: pointer; margin-left: 10px; 
         }
-        .history-actions i:hover { color: var(--text); }
 
         .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); color: var(--text-sub); font-size: 12px; }
         .footer-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
-        /* --- 7. 设置面板 (下拉) --- */
+        /* --- 7. 设置面板 (优化版) --- */
         .config-panel {
             position: absolute; top: 50px; left: 0; width: 100%;
             background: var(--white); z-index: 55; padding: 20px;
@@ -192,20 +179,30 @@
             transform: translateY(-150%); transition: 0.3s;
         }
         .config-panel.show { transform: translateY(0); }
-        .form-group { margin-bottom: 15px; }
+        /* 增加间距，拉低一点 */
+        .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 12px; color: var(--text-sub); margin-bottom: 5px; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); outline: none;}
+        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); }
+        
+        /* 新增：确认按钮 */
+        .btn-confirm {
+            width: 100%; padding: 12px;
+            background: var(--primary); color: white;
+            border: none; border-radius: 6px;
+            font-size: 15px; font-weight: bold;
+            cursor: pointer; margin-top: 10px;
+        }
+        .btn-confirm:active { opacity: 0.9; }
 
         /* 弹窗 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center; }
-        .modal-content { background: var(--white); padding: 25px; border-radius: 8px; width: 85%; max-width: 400px; color: var(--text); position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .modal-content { background: var(--white); padding: 25px; border-radius: 8px; width: 85%; max-width: 400px; color: var(--text); position: relative; }
         .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
 
-        /* 思考动画 (美化版) */
+        /* 思考动画 */
         .thinking { 
             color: var(--text-sub); font-size: 13px; 
-            padding: 12px 18px; /* 舒适间距 */
-            min-width: 100px;
+            padding: 12px 18px; min-width: 120px;
             display: flex; align-items: center; gap: 8px; 
         }
         .dot { width: 5px; height: 5px; background: var(--text-sub); border-radius: 50%; animation: bounce 1.4s infinite; }
@@ -218,46 +215,41 @@
 <body>
 
 <div class="app-container">
-    <!-- 遮罩层 (共用) -->
     <div class="overlay" id="overlay" onclick="closeAll()"></div>
 
-    <!-- 顶部导航 -->
     <div class="header">
         <div class="header-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></div>
         <div class="header-title" id="header-title">新对话</div>
         <div class="header-btn" onclick="toggleConfig()"><i class="fas fa-cog"></i></div>
     </div>
 
-    <!-- 设置面板 -->
+    <!-- 设置面板 (新增确认按钮) -->
     <div class="config-panel" id="config-panel">
         <div class="form-group">
             <label>选择产品</label>
-            <select id="product_select" class="form-control" onchange="saveConfig()">
+            <select id="product_select" class="form-control">
                 <option value="AI应用实战线下课">AI应用实战线下课</option>
                 <option value="AI应用线上课">AI应用线上课</option>
             </select>
         </div>
         <div class="form-group">
             <label>授权码</label>
-            <input type="text" id="auth_code" class="form-control" placeholder="输入授权码" onchange="saveConfig()">
+            <input type="text" id="auth_code" class="form-control" placeholder="输入授权码">
         </div>
+        <!-- 确认按钮 -->
+        <button class="btn-confirm" onclick="confirmConfig()">输入完成，开始对话</button>
     </div>
 
-    <!-- 左侧边栏 (核心：默认隐藏) -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <!-- 开启新对话 -->
             <button class="btn-new-chat" onclick="startNewChat()">
                 <i class="fas fa-plus"></i> 开启新对话
             </button>
-            <!-- 使用说明 -->
             <button class="btn-help" onclick="showModal('help-modal')">
                 <i class="far fa-question-circle"></i> 使用说明
             </button>
         </div>
-        <div class="history-list" id="history-list">
-            <!-- 历史记录 -->
-        </div>
+        <div class="history-list" id="history-list"></div>
         <div class="sidebar-footer">
             <div class="footer-row">
                 <span>夜间模式</span>
@@ -267,12 +259,11 @@
                 清空所有缓存
             </div>
             <div style="text-align:center; margin-top:10px;">
-                技术支持：[你的名字] AI 解决方案
+                技术支持：张兆华工作室 提供解决方案
             </div>
         </div>
     </div>
 
-    <!-- 聊天内容 -->
     <div class="chat-area" id="chat-box">
         <div class="message ai">
             <div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div>
@@ -282,7 +273,6 @@
         </div>
     </div>
 
-    <!-- 底部输入 -->
     <div class="footer">
         <input type="text" id="user_input" class="input-box" placeholder="输入问题..." enterkeyhint="send">
         <div class="send-btn" id="send_btn" onclick="sendMessage()">
@@ -291,7 +281,6 @@
     </div>
 </div>
 
-<!-- 使用说明弹窗 -->
 <div class="modal" id="help-modal">
     <div class="modal-content">
         <span class="close-modal" onclick="closeModal('help-modal')">&times;</span>
@@ -306,7 +295,7 @@
 
 <script>
     // ================= 配置区 =================
-    const DIFY_API_KEY = 'app-5W5V9gH3CP8QyruCqWvMcgn0'; // 替换 Key
+    const DIFY_API_KEY = 'app-5W5V9gH3CP8QyruCqWvMcgn0'; // 替换你的 Key
     const DIFY_BASE_URL = 'https://api.dify.ai/v1'; 
     // =========================================
 
@@ -325,39 +314,30 @@
         });
     });
 
-    // --- 交互逻辑 ---
-    function toggleSidebar() {
-        closeConfig();
-        document.getElementById('sidebar').classList.toggle('show');
-        document.getElementById('overlay').classList.toggle('show');
-    }
-    function toggleConfig() {
-        closeSidebar();
-        document.getElementById('config-panel').classList.toggle('show');
-        document.getElementById('overlay').classList.toggle('show');
-    }
-    function closeAll() {
-        document.getElementById('sidebar').classList.remove('show');
-        document.getElementById('config-panel').classList.remove('show');
-        document.getElementById('overlay').classList.remove('show');
-    }
+    function toggleSidebar() { closeConfig(); document.getElementById('sidebar').classList.toggle('show'); document.getElementById('overlay').classList.toggle('show'); }
+    function toggleConfig() { closeSidebar(); document.getElementById('config-panel').classList.toggle('show'); document.getElementById('overlay').classList.toggle('show'); }
+    function closeAll() { document.getElementById('sidebar').classList.remove('show'); document.getElementById('config-panel').classList.remove('show'); document.getElementById('overlay').classList.remove('show'); }
     function closeSidebar() { document.getElementById('sidebar').classList.remove('show'); }
     function closeConfig() { document.getElementById('config-panel').classList.remove('show'); }
     
+    // 新增：确认并关闭
+    function confirmConfig() {
+        const auth = document.getElementById('auth_code').value.trim();
+        if (!auth) { alert("请输入授权码！"); return; }
+        saveConfig();
+        closeAll(); // 关闭面板
+    }
+
     function showModal(id) { document.getElementById(id).style.display = 'flex'; closeAll(); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    // --- 主题 ---
     function toggleTheme() {
         isDark = !isDark;
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
         applyTheme();
     }
-    function applyTheme() {
-        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-    }
+    function applyTheme() { document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light'); }
 
-    // --- 发送 ---
     async function sendMessage() {
         const input = document.getElementById('user_input');
         const text = input.value.trim();
@@ -365,7 +345,7 @@
         const auth = document.getElementById('auth_code').value.trim();
 
         if (!text) return;
-        if (!auth) { alert("请先设置授权码！"); toggleConfig(); return; }
+        if (!auth) { alert("请先点击右上角设置授权码！"); toggleConfig(); return; }
 
         appendMessage('user', text);
         input.value = '';
@@ -375,26 +355,25 @@
         const loadingId = showThinking();
 
         try {
-            // 获取持久化 User ID
             let userId = localStorage.getItem('dify_user_id');
-            if (!userId) {
-                userId = "user-" + Math.random().toString(36).substring(2, 15);
-                localStorage.setItem('dify_user_id', userId);
+            if (!userId) { userId = "user-" + Math.random().toString(36).substring(2, 15); localStorage.setItem('dify_user_id', userId); }
+
+            const payload = {
+                "inputs": { "product_select": product, "auth_code": auth },
+                "query": text,
+                "response_mode": "blocking",
+                "conversation_id": currentConvId,
+                "user": userId
+            };
+            // 修复：只有当 currentConvId 存在时才传，避免 404 错误
+            if (currentConvId && currentConvId.length > 5) {
+                payload.conversation_id = currentConvId;
             }
 
             const response = await fetch(`${DIFY_BASE_URL}/chat-messages`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${DIFY_API_KEY}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    "inputs": { "product_select": product, "auth_code": auth },
-                    "query": text,
-                    "response_mode": "blocking",
-                    "conversation_id": currentConvId,
-                    "user": userId
-                })
+                headers: { 'Authorization': `Bearer ${DIFY_API_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
@@ -418,14 +397,13 @@
         }
     }
 
-    // --- 渲染与工具 ---
     function appendMessage(role, text, msgId = null) {
         const box = document.getElementById('chat-box');
         const div = document.createElement('div');
         div.className = `message ${role}`;
         
         const avatar = role === 'ai' ? `<div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div>` : '';
-        const htmlText = marked.parse(text);
+        const htmlText = marked.parse(text || "");
 
         let actions = '';
         if (role === 'ai' && msgId) {
@@ -484,11 +462,9 @@
         currentConvId = id;
         const chat = chatList.find(c => c.id === id);
         if (chat) document.getElementById('header-title').innerText = chat.title;
-        
         const msgs = JSON.parse(localStorage.getItem(`msg_${id}`)) || [];
         const box = document.getElementById('chat-box');
         box.innerHTML = '';
-        
         if (msgs.length === 0) {
              box.innerHTML = `<div class="message ai"><div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div><div class="bubble-content"><div class="bubble">历史记录加载完毕</div></div></div>`;
         } else {
@@ -562,7 +538,7 @@
         parent.querySelectorAll('.act-btn').forEach(b => b.style.color = '');
         btn.style.color = '#07C160';
         try {
-            let userId = localStorage.getItem('dify_user_id'); // 获取持久化ID
+            let userId = localStorage.getItem('dify_user_id');
             await fetch(`${DIFY_BASE_URL}/messages/${msgId}/feedbacks`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${DIFY_API_KEY}`, 'Content-Type': 'application/json' },

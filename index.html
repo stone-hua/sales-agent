@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <!-- 关键：禁止缩放，适配移动端视口 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI 销冠智能体</title>
+    <style>
+        /* --- 全局重置 --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            height: 100dvh; /* 使用动态视口高度，解决手机地址栏遮挡问题 */
+            display: flex;
+            justify-content: center;
+            overflow: hidden; /* 禁止整体滚动 */
+        }
+
+        /* --- 主容器：电脑居中，手机全屏 --- */
+        .app-container {
+            width: 100%;
+            max-width: 480px; /* 电脑上限制最大宽度，模拟手机 */
+            height: 100%;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        /* --- 1. 顶部配置区 (Header) --- */
+        .header {
+            background: #07c160; /* 微信绿 */
+            color: white;
+            padding: 15px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; margin-bottom: 10px; text-align: center; }
+        
+        .config-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        .config-item { flex: 1; }
+        .config-item label { font-size: 12px; opacity: 0.8; display: block; margin-bottom: 4px; }
+        
+        /* 输入控件美化 */
+        select, input.auth-input {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.9);
+            font-size: 14px;
+            color: #333;
+            outline: none;
+        }
+
+        /* --- 2. 聊天记录区 (Body) --- */
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f5f5f5;
+            -webkit-overflow-scrolling: touch; /* iOS顺滑滚动 */
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+            align-items: flex-start;
+        }
+        .message.user { justify-content: flex-end; }
+        .message.ai { justify-content: flex-start; }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            margin-right: 10px;
+            background-size: cover;
+            flex-shrink: 0;
+        }
+        .message.user .avatar { display: none; } /* 用户不显示头像，像微信 */
+        
+        .bubble {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 15px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            position: relative;
+        }
+        .message.ai .bubble {
+            background: #fff;
+            color: #333;
+            border: 1px solid #e5e5e5;
+        }
+        .message.user .bubble {
+            background: #95ec69; /* 微信气泡绿 */
+            color: #000;
+        }
+
+        /* --- 3. 底部输入区 (Footer) --- */
+        .input-area {
+            background: #f7f7f7;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        
+        .input-area input {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 16px; /* 防止iOS输入时放大 */
+            outline: none;
+            background: #fff;
+        }
+        
+        .send-btn {
+            background: #07c160;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .send-btn:active { background: #06ad56; }
+        .send-btn:disabled { background: #ccc; }
+
+        /* --- 4. 广告位 --- */
+        .ad-banner {
+            text-align: center;
+            font-size: 11px;
+            color: #aaa;
+            padding: 5px;
+            background: #f7f7f7;
+        }
+        
+        /* Markdown 简单样式适配 */
+        .bubble p { margin: 0 0 5px 0; }
+        .bubble ul { padding-left: 20px; margin: 5px 0; }
+        .bubble strong { font-weight: 600; }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- 顶部配置 -->
+    <div class="header">
+        <h1>AI 销冠助手</h1>
+        <div class="config-row">
+            <div class="config-item">
+                <label>选择产品</label>
+                <select id="product_select">
+                    <!-- 这里的 value 必须和 Google Sheet A列一致 -->
+                    <option value="AI应用实战线下课">AI应用实战线下课</option>
+                    <option value="AI应用线上课">线上录播课</option>
+                </select>
+            </div>
+            <div class="config-item">
+                <label>授权码</label>
+                <input type="text" id="auth_code" class="auth-input" placeholder="输入密码">
+            </div>
+        </div>
+    </div>
+
+    <!-- 聊天区域 -->
+    <div class="chat-box" id="chat-box">
+        <!-- 欢迎语 -->
+        <div class="message ai">
+            <div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div>
+            <div class="bubble">你好！我是你的销售助手。请先确认上方选择了正确的产品，并输入授权码，然后告诉我客户的问题。</div>
+        </div>
+    </div>
+
+    <!-- 底部输入 -->
+    <div class="input-area">
+        <input type="text" id="user_input" placeholder="输入问题..." enterkeyhint="send">
+        <button class="send-btn" id="send_btn" onclick="sendMessage()">发送</button>
+    </div>
+
+    <!-- 广告位 -->
+    <div class="ad-banner">
+        技术支持：[张兆华工作室] AI 解决方案
+    </div>
+</div>
+
+<script>
+    // ================= 配置区 =================
+    // 请替换为你自己的 Dify API Key (App B - 员工应用)
+    const API_KEY = 'app-5W5V9gH3CP8QyruCqWvMcgn0'; 
+    const API_URL = 'https://api.dify.ai/v1'; 
+    // =========================================
+
+    let conversationId = "";
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user_input');
+    const sendBtn = document.getElementById('send_btn');
+
+    // 监听回车发送
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        const product = document.getElementById('product_select').value;
+        const auth = document.getElementById('auth_code').value.trim();
+
+        if (!text) return;
+        if (!auth) {
+            alert("请先输入授权码！");
+            return;
+        }
+
+        // 1. UI更新：显示用户消息
+        appendMessage('user', text);
+        userInput.value = '';
+        userInput.blur(); // 手机上发送后收起键盘
+        setLoading(true);
+
+        try {
+            // 2. 请求 Dify API
+            const response = await fetch(`${API_URL}/chat-messages`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "inputs": {
+                        "product_select": product,
+                        "auth_code": auth
+                    },
+                    "query": text,
+                    "response_mode": "blocking",
+                    "conversation_id": conversationId,
+                    "user": "web-client-" + Math.random().toString(36).substring(7)
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "请求失败");
+            }
+
+            // 3. UI更新：显示 AI 回复
+            conversationId = data.conversation_id;
+            appendMessage('ai', data.answer);
+
+        } catch (error) {
+            appendMessage('ai', `❌ 错误：${error.message}`);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    function appendMessage(role, text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${role}`;
+        
+        // 简单的 Markdown 换行处理
+        let htmlText = text.replace(/\n/g, '<br>');
+        
+        // AI 头像
+        const avatarHtml = role === 'ai' ? 
+            `<div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div>` : '';
+
+        msgDiv.innerHTML = `${avatarHtml}<div class="bubble">${htmlText}</div>`;
+        
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight; // 滚动到底部
+    }
+
+    function setLoading(isLoading) {
+        if (isLoading) {
+            sendBtn.disabled = true;
+            sendBtn.innerText = "思考中...";
+        } else {
+            sendBtn.disabled = false;
+            sendBtn.innerText = "发送";
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AI 销冠实战系统</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* --- 1. 变量定义 --- */
         :root {
@@ -48,6 +48,7 @@
             background: var(--bg);
             display: flex; flex-direction: column;
             position: relative; margin: 0 auto;
+            transition: background 0.3s;
         }
 
         @media (min-width: 768px) {
@@ -61,9 +62,7 @@
             padding: 0 15px; flex-shrink: 0; z-index: 20; color: var(--text);
         }
         .header-title { font-weight: 600; font-size: 16px; }
-        .header-btn { 
-            font-size: 18px; cursor: pointer; padding: 8px; color: var(--text); 
-        }
+        .header-btn { font-size: 18px; cursor: pointer; padding: 5px; color: var(--text); }
 
         /* --- 4. 聊天区域 --- */
         .chat-area {
@@ -92,7 +91,9 @@
         .bubble p { margin: 0 0 10px 0; }
         .bubble p:last-child { margin: 0; }
         .bubble ul, .bubble ol { margin: 5px 0 10px 20px; padding: 0; }
+        .bubble li { margin-bottom: 4px; }
         .bubble strong { font-weight: 600; }
+        .bubble br { display: block; content: ""; margin-top: 5px; }
 
         /* 操作栏 */
         .actions {
@@ -138,25 +139,28 @@
         .sidebar.show { transform: translateX(0); }
 
         .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
-        
         .btn-new-chat {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             width: 100%; padding: 10px; margin-bottom: 10px;
             border-radius: 6px; font-size: 15px; cursor: pointer;
             background: transparent; border: 1px solid var(--primary); color: var(--primary);
+            transition: all 0.2s;
         }
+        .btn-new-chat:hover { background: var(--primary); color: white; }
         
         .btn-help {
             display: flex; align-items: center; justify-content: center; gap: 5px;
             width: 100%; padding: 8px; border-radius: 6px; font-size: 13px; cursor: pointer;
             background: transparent; border: none; color: var(--text-sub);
         }
+        .btn-help:hover { color: var(--text); background: rgba(0,0,0,0.05); }
 
         .history-list { flex: 1; overflow-y: auto; padding: 10px; }
         .history-item {
             padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text);
             display: flex; justify-content: space-between; align-items: center; cursor: pointer;
         }
+        .history-item:hover { background: rgba(0,0,0,0.03); }
         .history-item.active { color: var(--primary); font-weight: bold; }
         
         .history-actions { display: flex; align-items: center; }
@@ -167,7 +171,7 @@
         .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); color: var(--text-sub); font-size: 12px; }
         .footer-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
-        /* --- 7. 设置面板 --- */
+        /* --- 7. 设置面板 (优化版) --- */
         .config-panel {
             position: absolute; top: 50px; left: 0; width: 100%;
             background: var(--white); z-index: 55; padding: 20px;
@@ -175,10 +179,12 @@
             transform: translateY(-150%); transition: 0.3s;
         }
         .config-panel.show { transform: translateY(0); }
+        /* 增加间距，拉低一点 */
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 12px; color: var(--text-sub); margin-bottom: 5px; }
         .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); }
         
+        /* 新增：确认按钮 */
         .btn-confirm {
             width: 100%; padding: 12px;
             background: var(--primary); color: white;
@@ -186,6 +192,7 @@
             font-size: 15px; font-weight: bold;
             cursor: pointer; margin-top: 10px;
         }
+        .btn-confirm:active { opacity: 0.9; }
 
         /* 弹窗 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center; }
@@ -216,6 +223,7 @@
         <div class="header-btn" onclick="toggleConfig()"><i class="fas fa-cog"></i></div>
     </div>
 
+    <!-- 设置面板 (新增确认按钮) -->
     <div class="config-panel" id="config-panel">
         <div class="form-group">
             <label>选择产品</label>
@@ -228,6 +236,7 @@
             <label>授权码</label>
             <input type="text" id="auth_code" class="form-control" placeholder="输入授权码">
         </div>
+        <!-- 确认按钮 -->
         <button class="btn-confirm" onclick="confirmConfig()">输入完成，开始对话</button>
     </div>
 
@@ -250,7 +259,7 @@
                 清空所有缓存
             </div>
             <div style="text-align:center; margin-top:10px;">
-                技术支持：[你的名字] AI 解决方案
+                技术支持：张兆华工作室 提供解决方案
             </div>
         </div>
     </div>
@@ -286,8 +295,8 @@
 
 <script>
     // ================= 配置区 =================
-    // 🔴 这里填你刚绑定的自定义域名 (注意：没有末尾斜杠)
-    const WORKER_URL = 'https://api.huaged.com'; 
+    const DIFY_API_KEY = 'app-5W5V9gH3CP8QyruCqWvMcgn0'; // 替换你的 Key
+    const DIFY_BASE_URL = 'https://api.dify.ai/v1'; 
     // =========================================
 
     let currentConvId = "";
@@ -311,11 +320,12 @@
     function closeSidebar() { document.getElementById('sidebar').classList.remove('show'); }
     function closeConfig() { document.getElementById('config-panel').classList.remove('show'); }
     
+    // 新增：确认并关闭
     function confirmConfig() {
         const auth = document.getElementById('auth_code').value.trim();
         if (!auth) { alert("请输入授权码！"); return; }
         saveConfig();
-        closeAll();
+        closeAll(); // 关闭面板
     }
 
     function showModal(id) { document.getElementById(id).style.display = 'flex'; closeAll(); }
@@ -335,7 +345,7 @@
         const auth = document.getElementById('auth_code').value.trim();
 
         if (!text) return;
-        if (!auth) { alert("请先设置授权码！"); toggleConfig(); return; }
+        if (!auth) { alert("请先点击右上角设置授权码！"); toggleConfig(); return; }
 
         appendMessage('user', text);
         input.value = '';
@@ -355,16 +365,14 @@
                 "conversation_id": currentConvId,
                 "user": userId
             };
+            // 修复：只有当 currentConvId 存在时才传，避免 404 错误
             if (currentConvId && currentConvId.length > 5) {
                 payload.conversation_id = currentConvId;
             }
 
-            // 🟢 修改点：使用 WORKER_URL，干净的 Headers
-            const response = await fetch(WORKER_URL, {
+            const response = await fetch(`${DIFY_BASE_URL}/chat-messages`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Authorization': `Bearer ${DIFY_API_KEY}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
@@ -401,7 +409,7 @@
         if (role === 'ai' && msgId) {
             actions = `
                 <div class="actions">
-                    <span class="act-btn" onclick="copyText(this, '${text.replace(/'/g, "\\'").replace(/\n/g, "\\n")}')"><i class="fas fa-copy"></i> 复制</span>
+                    <span class="act-btn" onclick="copyText(this, '${text.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i> 复制</span>
                     <span class="act-btn" onclick="feedback('${msgId}', 'like', this)"><i class="fas fa-thumbs-up"></i></span>
                     <span class="act-btn" onclick="feedback('${msgId}', 'dislike', this)"><i class="fas fa-thumbs-down"></i></span>
                 </div>`;
@@ -454,11 +462,9 @@
         currentConvId = id;
         const chat = chatList.find(c => c.id === id);
         if (chat) document.getElementById('header-title').innerText = chat.title;
-        
         const msgs = JSON.parse(localStorage.getItem(`msg_${id}`)) || [];
         const box = document.getElementById('chat-box');
         box.innerHTML = '';
-        
         if (msgs.length === 0) {
              box.innerHTML = `<div class="message ai"><div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div><div class="bubble-content"><div class="bubble">历史记录加载完毕</div></div></div>`;
         } else {
@@ -520,45 +526,25 @@
     function clearCache() {
         if(confirm("确定清空所有记录？")) { localStorage.clear(); location.reload(); }
     }
-    
-    // 🟢 修复后的复制功能
     function copyText(btn, text) {
-        // 创建临时文本域
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        
-        // 确保元素不可见但存在
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        textArea.style.top = "0";
-        document.body.appendChild(textArea);
-        
-        textArea.focus();
-        textArea.select();
-        
-        try {
-            const successful = document.execCommand('copy');
-            if(successful) {
-                const original = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
-                setTimeout(() => btn.innerHTML = original, 2000);
-            } else {
-                alert("复制失败，请手动复制");
-            }
-        } catch (err) {
-            alert("复制失败，请手动复制");
-        }
-        
-        document.body.removeChild(textArea);
+        navigator.clipboard.writeText(text).then(() => {
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+            setTimeout(() => btn.innerHTML = original, 2000);
+        });
     }
-    
     async function feedback(msgId, rating, btn) {
         const parent = btn.parentElement;
         parent.querySelectorAll('.act-btn').forEach(b => b.style.color = '');
         btn.style.color = '#07C160';
-        // 注意：Feedback API 没有走 Worker 代理，因为通常不敏感
-        // 如果也想代理，需要在 Worker 里再写一个路由
-        // 这里暂时保持原样，如果不通可以忽略
+        try {
+            let userId = localStorage.getItem('dify_user_id');
+            await fetch(`${DIFY_BASE_URL}/messages/${msgId}/feedbacks`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${DIFY_API_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rating: rating, user: userId })
+            });
+        } catch(e) {}
     }
 </script>
 

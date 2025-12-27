@@ -267,7 +267,7 @@
         <div class="message ai">
             <div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div>
             <div class="bubble-content">
-                <div class="bubble">你好！我是你的 AI 销冠助手。请点击右上角 ⚙️ 设置授权码，然后开始工作。</div>
+                <div class="bubble">你好！我是你的 AI 销冠助手。请点击右上角 ⚙️ 输入授权码，然后开始工作。</div>
             </div>
         </div>
     </div>
@@ -293,11 +293,7 @@
 </div>
 
 <script>
-    // ================= 配置区 =================
-    // 🟢 已替换为你自己的域名，无需再改
     const WORKER_URL = 'https://api.huaged.com'; 
-    // =========================================
-
     let currentConvId = "";
     let chatList = JSON.parse(localStorage.getItem('chat_list')) || [];
     let isDark = localStorage.getItem('theme') === 'dark';
@@ -367,7 +363,6 @@
                 payload.conversation_id = currentConvId;
             }
 
-            // 🟢 Cloudflare 中转请求
             const response = await fetch(WORKER_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -405,7 +400,6 @@
 
         let actions = '';
         if (role === 'ai' && msgId) {
-            // 🟢 修复后的复制按钮 (兼容性最强版)
             actions = `
                 <div class="actions">
                     <span class="act-btn" onclick="copyText(this, '${text.replace(/'/g, "\\'").replace(/\n/g, "\\n")}')"><i class="fas fa-copy"></i> 复制</span>
@@ -526,7 +520,6 @@
         if(confirm("确定清空所有记录？")) { localStorage.clear(); location.reload(); }
     }
     
-    // 🟢 修复后的复制功能 (兼容所有浏览器)
     function copyText(btn, text) {
         const textArea = document.createElement("textarea");
         textArea.value = text;

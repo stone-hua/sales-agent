@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AI 销冠实战系统</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         /* --- 1. 变量定义 --- */
         :root {
@@ -48,7 +48,6 @@
             background: var(--bg);
             display: flex; flex-direction: column;
             position: relative; margin: 0 auto;
-            transition: background 0.3s;
         }
 
         @media (min-width: 768px) {
@@ -267,7 +266,7 @@
         <div class="message ai">
             <div class="avatar" style="background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');"></div>
             <div class="bubble-content">
-                <div class="bubble">你好！我是你的 AI 销冠助手。请点击右上角 ⚙️ 输入授权码，然后开始工作。</div>
+                <div class="bubble">你好！我是你的 AI 销冠助手。请点击右上角 ⚙️ 设置授权码，然后开始工作。</div>
             </div>
         </div>
     </div>
@@ -293,7 +292,10 @@
 </div>
 
 <script>
+    // ================= work ================ 
     const WORKER_URL = 'https://api.huaged.com'; 
+    // =========================================
+
     let currentConvId = "";
     let chatList = JSON.parse(localStorage.getItem('chat_list')) || [];
     let isDark = localStorage.getItem('theme') === 'dark';

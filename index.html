@@ -37,7 +37,7 @@
         html, body {
             width: 100%; height: 100dvh;
             overflow: hidden;
-            background-color: #222; /* 网页深色底板 */
+            background-color: #222;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex; justify-content: center;
         }
@@ -61,7 +61,7 @@
             display: flex; flex-direction: column;
             position: relative; margin: 0 auto;
             z-index: 10;
-            overflow: hidden; /* 关键：防止侧边栏溢出显示 */
+            overflow: hidden;
         }
 
         @media (min-width: 768px) {
@@ -100,35 +100,48 @@
         .message.user .bubble { background: var(--user-bg); border: 1px solid transparent; color: #000; }
         [data-theme="dark"] .message.user .bubble { color: #fff; }
 
-        /* Markdown 样式 */
         .bubble p { margin: 0 0 10px 0; } .bubble p:last-child { margin: 0; }
         .bubble ul, .bubble ol { margin: 5px 0 10px 20px; padding: 0; } .bubble strong { font-weight: 600; } .bubble br { display: block; content: ""; margin-top: 5px; }
 
-        /* Actions */
         .actions { display: flex; gap: 15px; margin-top: 5px; padding-left: 2px; font-size: 12px; color: var(--text-sub); }
         .message.user .actions { display: none; }
         .act-btn { cursor: pointer; display: flex; align-items: center; gap: 3px; }
         .act-btn:hover, .act-btn.active { color: var(--primary); }
 
-        /* --- 5. 底部输入区 --- */
+        /* --- 5. 底部输入区 (核心修改部分) --- */
         .footer {
             background: var(--white); border-top: 1px solid var(--border);
             padding: 10px 15px;
             padding-bottom: calc(10px + env(safe-area-inset-bottom)); 
-            display: flex; align-items: center; gap: 10px;
+            display: flex; 
+            align-items: flex-end; /* 修改：底部对齐，保证多行时按钮在下方 */
+            gap: 10px;
             flex-shrink: 0; z-index: 20;
         }
+        
         .input-box {
-            flex: 1; height: 38px; padding: 0 12px;
-            border: 1px solid var(--border); border-radius: 4px;
-            font-size: 16px; outline: none; background: var(--bg); color: var(--text);
+            flex: 1; 
+            min-height: 40px; /* 最小高度 */
+            max-height: 140px; /* 约等于6行的高度限制 */
+            padding: 9px 12px; /* 调整内边距适应文字 */
+            border: 1px solid var(--border); border-radius: 6px; /* 圆角稍微加大一点 */
+            font-size: 16px; 
+            outline: none; 
+            background: var(--bg); color: var(--text);
+            resize: none; /* 禁止手动拖拽调整大小 */
+            overflow-y: auto; /* 超出高度自动滚动 */
+            line-height: 1.5;
+            font-family: inherit;
         }
+        
         .send-btn {
-            width: 38px; height: 38px; background: var(--primary); color: white;
+            width: 40px; height: 40px; /* 固定高度 */
+            background: var(--primary); color: white;
             border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+            flex-shrink: 0; /* 防止按钮被压缩 */
         }
 
-        /* --- 6. 侧边栏 & 设置 (双重隐藏机制) --- */
+        /* --- 6. 侧边栏 & 设置 --- */
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 50;
@@ -140,14 +153,10 @@
             position: absolute; top: 0; left: 0; height: 100%; 
             width: 280px; max-width: 80%; 
             background: var(--sidebar-bg); z-index: 60; 
-            /* 核心修改：强制移出 */
-            transform: translateX(-100%); 
-            /* 核心修改：增加透明度变化，彻底隐身 */
-            opacity: 0;
+            transform: translateX(-100%); opacity: 0;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
             display: flex; flex-direction: column; border-right: 1px solid var(--border);
         }
-        /* 激活时：移入 + 不透明 */
         .sidebar.show { transform: translateX(0); opacity: 1; }
 
         .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
@@ -174,9 +183,7 @@
         }
         .history-item.active { color: var(--primary); font-weight: bold; }
         .history-item:hover { background: rgba(0,0,0,0.03); }
-        .history-actions i { 
-            padding: 8px; color: var(--text-sub); cursor: pointer; margin-left: 10px; 
-        }
+        .history-actions i { padding: 8px; color: var(--text-sub); cursor: pointer; margin-left: 10px; }
         .history-actions i:hover { color: var(--text); }
 
         .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); color: var(--text-sub); font-size: 12px; }
@@ -187,7 +194,6 @@
             position: absolute; top: 50px; left: 0; width: 100%;
             background: var(--white); z-index: 55; padding: 20px;
             box-shadow: 0 5px 10px rgba(0,0,0,0.05);
-            /* 同样加上透明度双重隐藏 */
             transform: translateY(-150%); opacity: 0;
             transition: transform 0.3s, opacity 0.3s;
         }
@@ -206,17 +212,11 @@
         }
         .btn-confirm:active { opacity: 0.9; }
 
-        /* 弹窗 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center; }
         .modal-content { background: var(--white); padding: 25px; border-radius: 8px; width: 85%; max-width: 400px; color: var(--text); position: relative; }
         .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
 
-        /* 思考动画 */
-        .thinking { 
-            color: var(--text-sub); font-size: 13px; 
-            padding: 12px 18px; min-width: 120px;
-            display: flex; align-items: center; gap: 8px; 
-        }
+        .thinking { color: var(--text-sub); font-size: 13px; padding: 12px 18px; min-width: 120px; display: flex; align-items: center; gap: 8px; }
         .dot { width: 5px; height: 5px; background: var(--text-sub); border-radius: 50%; animation: bounce 1.4s infinite; }
         .dot:nth-child(2) { animation-delay: 0.2s; } .dot:nth-child(3) { animation-delay: 0.4s; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
@@ -224,7 +224,7 @@
 </head>
 <body>
 
-<!-- 背景广告层 (样式由JS动态控制) -->
+<!-- 背景广告层 -->
 <div class="ad-layer" id="ad-layer">
     <div class="ad-item" id="ad-left"></div>
     <div class="ad-item" id="ad-right"></div>
@@ -289,8 +289,9 @@
         </div>
     </div>
 
+    <!-- 核心修改：将input改为textarea -->
     <div class="footer">
-        <input type="text" id="user_input" class="input-box" placeholder="输入问题..." enterkeyhint="send">
+        <textarea id="user_input" class="input-box" placeholder="输入问题..." rows="1" style="height: 40px;"></textarea>
         <div class="send-btn" id="send_btn" onclick="sendMessage()">
             <i class="fas fa-paper-plane"></i>
         </div>
@@ -304,8 +305,9 @@
         <br>
         <p><strong>1. 授权登录</strong><br>点击右上角设置图标，输入老板分发的授权码。</p>
         <p><strong>2. 切换产品</strong><br>在设置面板选择要销售的产品，AI会自动切换话术。</p>
-        <p><strong>3. 历史记录</strong><br>点击左上角菜单，可查看、重命名或删除历史对话。</p>
-        <p><strong>4. 反馈优化</strong><br>对回答可点击“赞”或“踩”，我们会持续优化。</p>
+        <p><strong>3. 模拟沟通</strong><br>AI会根据公司业务，模拟对话场景，评估回复的质量。</p>
+        <p><strong>4. 历史记录</strong><br>点击左上角菜单，可查看、重命名或删除历史对话。</p>
+        <p><strong>5. 反馈优化</strong><br>对回答可点击“赞”或“踩”，我们会持续优化。</p>
     </div>
 </div>
 
@@ -324,9 +326,7 @@
         IMG_WIDTH: "150px",    
         IMG_OPACITY: "0.2"     
     };
-    // =================================================
 
-    // 广告渲染
     const layer = document.getElementById('ad-layer');
     const left = document.getElementById('ad-left');
     const right = document.getElementById('ad-right');
@@ -352,8 +352,22 @@
         renderHistory();
         if (chatList.length > 0) loadChat(chatList[0].id);
         
-        document.getElementById('user_input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
+        // 核心修改：输入框自适应高度逻辑
+        const input = document.getElementById('user_input');
+        
+        input.addEventListener('input', function() {
+            this.style.height = 'auto'; // 先重置
+            this.style.height = (this.scrollHeight) + 'px'; // 再设置为内容高度
+        });
+
+        // 核心修改：回车键逻辑优化
+        // 桌面端：回车发送，Shift+回车换行
+        // 移动端：保持默认（回车换行），点击按钮发送
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 768) {
+                e.preventDefault(); // 阻止默认换行
+                sendMessage();
+            }
         });
     });
 
@@ -391,6 +405,8 @@
 
         appendMessage('user', text);
         input.value = '';
+        // 核心修改：发送后重置高度
+        input.style.height = '40px'; 
         input.blur();
         closeAll();
         
@@ -594,7 +610,7 @@
         btn.style.color = '#07C160';
         try {
             let userId = localStorage.getItem('dify_user_id');
-            await fetch(`${WORKER_URL}`, { // 反馈也走 Worker 转发
+            await fetch(`${WORKER_URL}`, { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type: 'feedback', message_id: msgId, rating: rating, user: userId })
@@ -605,6 +621,3 @@
 
 </body>
 </html>
-
-
-

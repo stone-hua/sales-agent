@@ -122,7 +122,7 @@
             border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
 
-        /* --- 6. 侧边栏 --- */
+        /* --- 6. 侧边栏 & 设置 (Overlay) --- */
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 50;
@@ -130,6 +130,7 @@
         }
         .overlay.show { opacity: 1; visibility: visible; }
 
+        /* 侧边栏 (默认隐藏，点击滑出，电脑手机统一) */
         .sidebar {
             position: absolute; top: 0; left: 0; height: 100%; width: 280px; max-width: 80%;
             background: var(--sidebar-bg); z-index: 60;
@@ -171,7 +172,7 @@
         .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); color: var(--text-sub); font-size: 12px; }
         .footer-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
-        /* --- 7. 设置面板 (优化版) --- */
+        /* --- 7. 设置面板 --- */
         .config-panel {
             position: absolute; top: 50px; left: 0; width: 100%;
             background: var(--white); z-index: 55; padding: 20px;
@@ -179,12 +180,10 @@
             transform: translateY(-150%); transition: 0.3s;
         }
         .config-panel.show { transform: translateY(0); }
-        /* 增加间距，拉低一点 */
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 12px; color: var(--text-sub); margin-bottom: 5px; }
         .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); }
         
-        /* 新增：确认按钮 */
         .btn-confirm {
             width: 100%; padding: 12px;
             background: var(--primary); color: white;
@@ -223,7 +222,7 @@
         <div class="header-btn" onclick="toggleConfig()"><i class="fas fa-cog"></i></div>
     </div>
 
-    <!-- 设置面板 (新增确认按钮) -->
+    <!-- 设置面板 -->
     <div class="config-panel" id="config-panel">
         <div class="form-group">
             <label>选择产品</label>
@@ -236,10 +235,10 @@
             <label>授权码</label>
             <input type="text" id="auth_code" class="form-control" placeholder="输入授权码">
         </div>
-        <!-- 确认按钮 -->
         <button class="btn-confirm" onclick="confirmConfig()">输入完成，开始对话</button>
     </div>
 
+    <!-- 侧边栏 -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <button class="btn-new-chat" onclick="startNewChat()">
@@ -295,8 +294,8 @@
 
 <script>
     // ================= 配置区 =================
-    const DIFY_API_KEY = 'app-5W5V9gH3CP8QyruCqWvMcgn0'; // 替换你的 Key
-    const DIFY_BASE_URL = 'https://api.dify.ai/v1'; 
+    // 🟢 已替换为你自己的域名，无需再改
+    const WORKER_URL = 'https://api.huaged.com'; 
     // =========================================
 
     let currentConvId = "";
@@ -320,12 +319,11 @@
     function closeSidebar() { document.getElementById('sidebar').classList.remove('show'); }
     function closeConfig() { document.getElementById('config-panel').classList.remove('show'); }
     
-    // 新增：确认并关闭
     function confirmConfig() {
         const auth = document.getElementById('auth_code').value.trim();
         if (!auth) { alert("请输入授权码！"); return; }
         saveConfig();
-        closeAll(); // 关闭面板
+        closeAll();
     }
 
     function showModal(id) { document.getElementById(id).style.display = 'flex'; closeAll(); }
@@ -365,14 +363,14 @@
                 "conversation_id": currentConvId,
                 "user": userId
             };
-            // 修复：只有当 currentConvId 存在时才传，避免 404 错误
             if (currentConvId && currentConvId.length > 5) {
                 payload.conversation_id = currentConvId;
             }
 
-            const response = await fetch(`${DIFY_BASE_URL}/chat-messages`, {
+            // 🟢 Cloudflare 中转请求
+            const response = await fetch(WORKER_URL, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${DIFY_API_KEY}`, 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
@@ -407,9 +405,10 @@
 
         let actions = '';
         if (role === 'ai' && msgId) {
+            // 🟢 修复后的复制按钮 (兼容性最强版)
             actions = `
                 <div class="actions">
-                    <span class="act-btn" onclick="copyText(this, '${text.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i> 复制</span>
+                    <span class="act-btn" onclick="copyText(this, '${text.replace(/'/g, "\\'").replace(/\n/g, "\\n")}')"><i class="fas fa-copy"></i> 复制</span>
                     <span class="act-btn" onclick="feedback('${msgId}', 'like', this)"><i class="fas fa-thumbs-up"></i></span>
                     <span class="act-btn" onclick="feedback('${msgId}', 'dislike', this)"><i class="fas fa-thumbs-down"></i></span>
                 </div>`;
@@ -526,23 +525,43 @@
     function clearCache() {
         if(confirm("确定清空所有记录？")) { localStorage.clear(); location.reload(); }
     }
+    
+    // 🟢 修复后的复制功能 (兼容所有浏览器)
     function copyText(btn, text) {
-        navigator.clipboard.writeText(text).then(() => {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
             const original = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
             setTimeout(() => btn.innerHTML = original, 2000);
-        });
+        } catch (err) {
+            alert("复制失败，请手动复制");
+        }
+        document.body.removeChild(textArea);
     }
+    
     async function feedback(msgId, rating, btn) {
         const parent = btn.parentElement;
         parent.querySelectorAll('.act-btn').forEach(b => b.style.color = '');
         btn.style.color = '#07C160';
         try {
             let userId = localStorage.getItem('dify_user_id');
-            await fetch(`${DIFY_BASE_URL}/messages/${msgId}/feedbacks`, {
+            await fetch(`${WORKER_URL}`, { // 反馈也走 Worker 转发
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${DIFY_API_KEY}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rating: rating, user: userId })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    type: 'feedback', // 标记这是反馈请求
+                    message_id: msgId, 
+                    rating: rating, 
+                    user: userId 
+                })
             });
         } catch(e) {}
     }

@@ -126,7 +126,7 @@
                 <i class="fas fa-moon" style="cursor:pointer; font-size:18px;" onclick="toggleTheme()"></i>
             </div>
             <div class="clear-cache-row" onclick="clearCache()">清空所有缓存</div>
-            <div style="text-align:center; margin-top:10px;">技术支持：销售赋能中心</div>
+            <div style="text-align:center; margin-top:10px;">技术支持：张兆华工作室</div>
         </div>
     </div>
 
@@ -152,21 +152,18 @@
         <h3>📚 使用指南</h3>
         <br>
         <div>
-            <p><strong>1. 模式切换</strong><br>右上角设置中选择“销售辅助”或“销售模拟”。</p>
-            <p><strong>2. 基础设置</strong><br>输入授权码 和 绑定个人账号（手机号）。</p>
-            <p><strong>3. 课程输入</strong><br>手动输入课程全称（需与后台产品表一致），系统会自动读取开课时间与地点。</p>
+            <p><strong>1. 模式切换</strong><br>右上角设置中选择“销售辅助”或“销售模拟”。</p></p>
+            <p><strong>2. 基础设置</strong><br>输入授权码 和 绑定个人账号（手机号）。</p></p>
+            <p><strong>3. 课程输入</strong><br>手动输入课程全称（需与后台产品表一致），系统会自动读取产品信息。</p></p>
         </div>
     </div>
 </div>
 
 <script>
-    // ▼▼▼ 请修改这里 ▼▼▼
-    // Cloudflare Worker 的地址
+ 
     const WORKER_URL = 'https://mk.huaged.com'; 
-    // Google Apps Script 发布的 Web App URL (exec结尾)
     const LOG_URL = 'https://script.google.com/macros/s/AKfycbxommutiG5dHzwIu4xHcs3qLgbCP1JNdNm5QS1g9lU8cd196uNnHcxDxt9Z53EGvyj9aQ/exec';
-    
-    const AI_AVATAR_URL = 'https://cdn-icons-png.flaticon.com/512/4712/4712009.png'; // 换了个通用的机器人头像
+    const AI_AVATAR_URL = 'https://cdn-icons-png.flaticon.com/512/4712/4712009.png';   
 
     let currentConvId = "";
     let chatList = JSON.parse(localStorage.getItem('course_chat_list')) || [];
@@ -449,4 +446,3 @@
 </script>
 </body>
 </html>
-

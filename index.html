@@ -154,9 +154,9 @@
         <h3>📚 使用指南</h3>
         <br>
         <div>
-            <p><strong>1. 模式切换</strong><br>右上角设置中选择“销售辅助”或“销售模拟”。</p></p>
-            <p><strong>2. 基础设置</strong><br>输入授权码 和 绑定个人账号（手机号）。</p></p>
-            <p><strong>3. 课程输入</strong><br>手动输入课程全称（需与后台产品表一致），系统会自动读取产品信息。</p></p>
+            <p><strong>1. 模式切换</strong><br>右上角设置中选择“销售辅助”或“销售模拟”。</p><br>
+            <p><strong>2. 基础设置</strong><br>输入授权码 和 绑定个人账号（手机号）。</p><br>
+            <p><strong>3. 课程输入</strong><br>手动输入课程全称（需与后台产品表一致），系统会自动读取产品信息。</p><br>
         </div>
     </div>
 </div>
@@ -208,7 +208,7 @@
         appendMessage('user', text);
         input.value = ''; input.style.height = '60px'; input.blur(); closeAll();
         
-        input.disabled = true; input.placeholder = "AI 正在查询课程资料..."; btn.style.opacity = "0.5";
+        input.disabled = true; input.placeholder = "AI 正在思考..."; btn.style.opacity = "0.5";
         const loadingId = showThinking();
 
         try {
@@ -242,7 +242,7 @@
             if (data.answer) {
                 appendMessage('ai', data.answer, true);
                 
-                // 异步写日志
+ 
                 logToSheetSafe(auth, product, text, data.answer, phone, mode);
 
                 if (currentConvId !== data.conversation_id) { 
@@ -310,7 +310,7 @@
         const box = document.getElementById('chat-box');
         const div = document.createElement('div');
         div.id = id; div.className = 'message ai';
-        div.innerHTML = `<div class="avatar" style="background-image: url('${AI_AVATAR_URL}')"></div><div class="bubble-content"><div class="bubble thinking">查询知识库中 <div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+        div.innerHTML = `<div class="avatar" style="background-image: url('${AI_AVATAR_URL}')"></div><div class="bubble-content"><div class="bubble thinking">AI思考中... <div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
         box.appendChild(div); box.scrollTop = box.scrollHeight; 
         return id;
     }
@@ -397,7 +397,7 @@
         const box = document.getElementById('chat-box');
         box.classList.add('fading');
         setTimeout(() => {
-            box.innerHTML = `<div class="message ai"><div class="avatar" style="background-image: url('${AI_AVATAR_URL}')"></div><div class="bubble-content"><div class="bubble">👋 新会话开始。</div></div></div>`; 
+            box.innerHTML = `<div class="message ai"><div class="avatar" style="background-image: url('${AI_AVATAR_URL}')"></div><div class="bubble-content"><div class="bubble">👋 您好！我是AI课程销冠助手。<br><br>我可以帮您：<br>1. 回答学员关于开课时间、地点的咨询。<br>2. 针对高价课程进行模拟对练。<br><br>请点击右上角 ⚙️ 完善信息，输入要推广的课程名称。</div></div></div>`; 
             box.classList.remove('fading');
             closeAll();
             document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));

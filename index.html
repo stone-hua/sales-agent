@@ -226,7 +226,20 @@
                 "user": "user-" + phone
             };
 
-            const response = await fetch(WORKER_URL, {
+ 
+            const fetchWithRetry = async (url, options, n = 3) => {
+                try {
+                    return await fetch(url, options);
+                } catch (err) {
+                    if (n <= 1) throw err; // 如果重试次数用完了，抛出错误
+                    console.log(`请求失败，正在重试... 剩余次数: ${n-1}`);
+                    await new Promise(r => setTimeout(r, 1000)); // 等待 1 秒再试
+                    return await fetchWithRetry(url, options, n - 1);
+                }
+            };
+
+ 
+            const response = await fetchWithRetry(WORKER_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
